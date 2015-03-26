@@ -12,9 +12,10 @@ class Commentaire
     {
         if ($cid > 0) {
             $this->setCid($cid);
-            $req = "SELECT * FROM commentaire  WHERE cid = $cid";
-            $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
-            while ($a = mysqli_fetch_assoc($res)) {
+            $req = "SELECT *
+                    FROM commentaire
+                    WHERE cid = $cid";
+            foreach (Database::_query($req) as $a) {
                 $this->cid = $a['cid'];
                 $this->eid = $a['eid'];
                 $this->uid = $a['uid'];
@@ -22,37 +23,36 @@ class Commentaire
                 $this->date = $a['date'];
             }
         } else {
-            $this->cid = 0;
-            $this->eid = 0;
+            $this->idt = 0;
+            $this->idf = 0;
             $this->uid = 0;
-            $this->contenu = 0;
+            $this->nom = 0;
+            $this->description = 0;
             $this->date = 0;
         }
-
     }
 
     public static function _getAllCommentaire($eid)
     {
+        // On récupère tous les commentaires pour l'eid donné dans un tableau.
         $r = array();
-        if ($eid > 0) {
+        $req = "SELECT *
+                FROM commentaire
+                WHERE eid = '$eid'";
+        foreach (Database::_query($req) as $a) {
+            $r[] = $a;
+        }
 
-            $req = "SELECT * FROM commentaire  WHERE eid = '$eid'";
-            $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
-            while ($a = mysqli_fetch_assoc($res)) {
-                $r[] = $a;
-            }
-
-            foreach ($r as $index => $value) {
-                $utilisateur = new Utilisateur($value['uid']);
-                echo "
-                    <li class='collection-item avatar'>
-                        <i class='mdi-file-folder circle'></i>
-                        <span class='title'>" . $utilisateur->getPseudo() . " le " . $value['date'] . "</span>
+        // On crée pour chaque commentaire un "Avatar Content".
+        foreach ($r as $index => $value) {
+            $utilisateur = new Utilisateur($value['uid']);
+            echo '  <li class="collection-item avatar">
+                        <i class="mdi-file-folder circle"></i>
+                        <span class="title">' . $utilisateur->getPseudo() . ' le ' . $value['date'] . '</span>
                         <p>
-                            " . $value['contenu'] . "
+                            ' . $value['contenu'] . '
                         </p>
-                    </li>";
-            }
+                    </li>';
         }
     }
 
@@ -63,7 +63,9 @@ class Commentaire
 
     public function setCid($cid)
     {
-        if (!preg_match('#^[\d]+$#', $cid)) return false;
+        if (!preg_match('#^[\d]+$#', $cid)) {
+            return false;
+        }
         $this->cid = $cid;
         return true;
 
@@ -76,7 +78,9 @@ class Commentaire
 
     public function setEid($eid)
     {
-        if (!preg_match('#^[\d]+$#', $eid)) return false;
+        if (!preg_match('#^[\d]+$#', $eid)) {
+            return false;
+        }
         $this->eid = $eid;
         return true;
     }
@@ -89,7 +93,9 @@ class Commentaire
 
     public function setUid($uid)
     {
-        if (!preg_match('#^[\d]+$#', $uid)) return false;
+        if (!preg_match('#^[\d]+$#', $uid)) {
+            return false;
+        }
         $this->uid = $uid;
         return true;
     }
@@ -101,7 +107,9 @@ class Commentaire
 
     public function setContenu($contenu)
     {
-        if (!preg_match('#^[\w\s\.\,\:\?\!\(\)]+$#', $contenu)) return false;
+        if (!preg_match('#^[\w\s\.\,\:\?\!\(\)]+$#', $contenu)) {
+            return false;
+        }
         $this->contenu = addslashes($contenu);
         return true;
     }
@@ -119,13 +127,12 @@ class Commentaire
 
     public function insert()
     {
-        $db = mysqli_connect("127.0.0.1", "root", "", "streetartaix");
-        $req = "
-            INSERT INTO commentaire (date, eid, uid, contenu)
-            VALUES (NOW(), '" . $this->eid . "','" . $this->uid . "','" . $this->contenu . "')";
-        $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
-        if (!$res) return false;
-        $this->cid = mysqli_insert_id($db);
-        return true;
+        $req = "INSERT INTO commentaire(date, eid, uid, contenu)
+                VALUES (NOW(), '" . $this->eid . "','" . $this->uid . "','" . $this->contenu . "')";
+        $res = Database::_exec($req);
+        if ($res) {
+            $this->cid = Database::_lastInsertId();
+        }
+        return $this;
     }
 }

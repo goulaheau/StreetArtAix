@@ -7,7 +7,7 @@ $alert = $id = null;
 
 $evenement = new Evenement($_GET['id']);
 $eid = $evenement->getEid();
-$utilisateur = isset($_SESSION['id']) ? new Utilisateur($_SESSION['id']) : new Utilisateur();
+
 
 // Vérification du POST message.
 if (isset($_POST['contenu']) && isset($_SESSION['id'])) {

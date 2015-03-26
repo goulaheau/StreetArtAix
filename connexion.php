@@ -1,18 +1,18 @@
 <?php require "require.php";
 head("Connexion");
 require "menu.php";
-$alert = $email = null;
+
 if (isset($_POST['pseudo']) && isset($_POST['password'])) {
     $pseudo = $_POST['pseudo'];
     $password = $_POST['password'];
     if (!Utilisateur::_exist($pseudo)) {
         $alert = 'Le compte n\'existe pas.';
     } else {
-        $u = new Utilisateur($pseudo);
-        if (!$u->checkPassword($password)) {
+        $utilisateur = new Utilisateur($pseudo);
+        if (!$utilisateur->checkPassword($password)) {
             $alert = "Le mot de passe et le nom d'utilisateur ne correspondent pas.";
         } else {
-            $_SESSION['id'] = $u->getUid();
+            $_SESSION['id'] = $utilisateur->getUid();
             $alert = "Vous êtes connecté.";
             header('Location: index.php');
         }
@@ -25,9 +25,11 @@ if (isset($_POST['pseudo']) && isset($_POST['password'])) {
                 <h2 class="header">Connexion ou Création de compte</h2>
 
                 <div class="col s6">
-                    <h4>Utilisateur déjà inscrit<?php echo $alert; ?></h4>
+                    <h4>Utilisateur déjà inscrit</h4>
 
                     <p>Connectez-vous en utilisant vos identifiants.</p>
+
+                    <p><?= $alert; ?></p>
 
                     <div class="row">
                         <form class="col s12" action="" method="POST">

@@ -2,75 +2,34 @@
 
 class Utilisateur
 {
+    private $uid;
     private $pseudo;
     private $email;
     private $password;
-    private $uid;
     private $admin;
 
     public function __construct($uid = 0)
     {
         if (self::_exist($uid)) {
-            if (verifInt($uid)) {
+            if (is_numeric($uid)) {
                 $req = "SELECT * FROM utilisateur WHERE uid = '$uid'";
-            } else {
+            }
+            else {
                 $req = "SELECT * FROM utilisateur WHERE pseudo = '$uid'";
             }
-            $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . FILE . ' à la ligne ' . LINE . ' avec la requete : ' . $req);
-            while ($a = mysqli_fetch_assoc($res)) {
+            foreach (Database::_query($req) as $a) {
                 $this->uid = $a['uid'];
-                $this->email = $a['email'];
                 $this->pseudo = $a['pseudo'];
+                $this->email = $a['email'];
                 $this->password = $a['password'];
                 $this->admin = $a['admin'];
             }
         } else {
-            $this->email = 0;
-            $this->pseudo = 0;
-            $this->password = 0;
             $this->uid = 0;
+            $this->pseudo = 0;
+            $this->email = 0;
+            $this->password = 0;
             $this->admin = 0;
-        }
-    }
-
-    static public function _exist($u = null)
-    {
-        if (!is_null($u)) {
-            if (verifMail($u)) {
-                $where = "email = '$u'";
-            } else if (verifInt($u)) {
-                $where = "uid = '" . intval($u) . "'";
-            } else if (verifName($u)) {
-                $where = "pseudo = '$u'";
-            } else {
-                return false;
-            }
-
-            $req = "SELECT uid FROM utilisateur WHERE " . $where;
-            $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
-            if (mysqli_num_rows($res) > 0) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    static public function _checkOrUncheck($eid)
-    {
-        $u = isset($_SESSION['id']) ? new Utilisateur($_SESSION['id']) : new Utilisateur();
-        $uid = $u->getUid();
-        $check = 0;
-        foreach (Utilisateur::_checkInscription($eid) as $v) {
-            if ($v['uid'] == $uid) {
-                $check++;
-            }
-        }
-        if ($check == 0) {
-            echo 'unchecked';
-        } else {
-            echo 'checked';
         }
     }
 
@@ -81,23 +40,11 @@ class Utilisateur
 
     public function setUid($uid)
     {
-        if (!is_int($uid)) {
+        if (!preg_match("#^[\d]+$#", $uid)) {
             return false;
         }
         $this->uid = $uid;
         return true;
-    }
-
-    static public function _checkInscription($eid)
-    {
-        $req = "SELECT * FROM evenement_utilisateur WHERE eid = " . $eid . "";
-        $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
-        if (!$res) return false;
-        $r = array();
-        while ($a = mysqli_fetch_assoc($res)) {
-            $r[] = $a;
-        }
-        return $r;
     }
 
     public function getEmail()
@@ -107,7 +54,7 @@ class Utilisateur
 
     public function setEmail($email)
     {
-        if (!preg_match(" /^[^\W][a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*\@[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*\.[a-zA-Z]{2,4}$/ ", $email)) {
+        if (!preg_match("#^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,4}$#", $email)) {
             return false;
         }
         $this->email = $email;
@@ -121,7 +68,7 @@ class Utilisateur
 
     public function setPseudo($pseudo)
     {
-        if (!preg_match(" \^[a-zA-Z0-9_]{3,16}$\ ", $pseudo)) {
+        if (!preg_match("#^[\w\.\#\-\s]{5,}$#", $pseudo)) {
             return false;
         }
         $this->pseudo = $pseudo;
@@ -135,7 +82,7 @@ class Utilisateur
 
     public function setPassword($password)
     {
-        if (!preg_match("#^[\w\.\#\-\s]{6,20}$#", $password)) {
+        if (!preg_match("#^[\w\.\#\-\s]{6,}$#", $password)) {
             return false;
         }
         $this->password = $password;
@@ -149,7 +96,7 @@ class Utilisateur
 
     public function setAdmin($admin)
     {
-        if (!is_int($admin)) {
+        if ($admin != 0 || $admin != 1) {
             return false;
         }
         $this->admin = $admin;
@@ -158,17 +105,19 @@ class Utilisateur
 
     public function insert()
     {
-        $db = mysqli_connect("127.0.0.1", "root", "", "streetartaix");
-        $req = "INSERT INTO utilisateur (pseudo, email, password)
-            VALUES ('" . $this->pseudo . "', '" . $this->email . "', '" . md5($this->password) . "')";
-        $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
-        if (!$res) return false;
-        $this->uid = mysqli_insert_id($db);
-        return true;
+        $req = "INSERT INTO utilisateur(
+                  pseudo,
+                  email,
+                  password
+                ) VALUES (
+                  '$this->pseudo',
+                  '$this->email',
+                  '".md5($this->password)."'
+                )";
+        return Database::_exec($req);
     }
 
-    public function checkPassword($password)
-    {
+    public function checkPassword($password){
         if (md5($password) != $this->password) {
             return false;
         }
@@ -185,24 +134,71 @@ class Utilisateur
 
     public function inscriptionEvenement($eid)
     {
-        $req = " INSERT INTO evenement_utilisateur (eid, uid)
-            VALUES ('" . $eid . "', '" . $this->uid . "') ";
-        $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
-        if (!$res) {
-            return false;
-        }
-        $this->uid = mysqli_insert_id($db);
-        return true;
+        $req = "INSERT INTO evenement_utilisateur(
+                  eid,
+                  uid
+                ) VALUES (
+                  '$eid',
+                  '$this->uid'
+                )";
+        return Database::_exec($req);
     }
 
     public function desinscriptionEvenement($eid)
     {
-        $req = " DELETE FROM evenement_utilisateur WHERE eid = " . $eid . " AND uid = " . $this->uid . " ";
-        $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
-        if (!$res) {
-            return false;
+        $req = "DELETE FROM evenement_utilisateur
+                WHERE eid = '$eid'
+                AND   uid = '$this->uid' ";
+        return Database::_exec($req);
+    }
+
+    static public function _exist($u = null)
+    {
+        if (!is_null($u)) {
+            if (verifMail($u)) {
+                $where = "email = '$u'";
+            } else if (verifInt($u)) {
+                $where = "uid = '" . intval($u) . "'";
+            } else if (verifName($u)) {
+                $where = "pseudo = '$u'";
+            } else {
+                return false;
+            }
+
+            $req = "SELECT uid FROM utilisateur WHERE " . $where;
+            if (Database::_selectOne($req) > 0) {
+                return true;
+            }
         }
-        $this->uid = mysqli_insert_id($db);
-        return true;
+        return false;
+    }
+
+    static public function _checkOrUncheck($eid)
+    {
+        // Récupération de l'uid.
+        $utilisateur = isset($_SESSION['id']) ? new Utilisateur($_SESSION['id']) : new Utilisateur();
+        $uid = $utilisateur->getUid();
+
+        // Récupération des utilisateurs inscrits à l'évènement.
+        $req = "SELECT *
+                FROM evenement_utilisateur
+                WHERE eid = '$eid'";
+        $r = array();
+        foreach (Database::_query($req) as $a) {
+            $r[] = $a;
+        }
+
+        // Si un utilisateur est inscrit on check, sinon non.
+        $check = 0;
+        foreach ($r as $index => $value) {
+            if ($value['uid'] == $uid) {
+                $check++;
+            }
+        }
+        if ($check == 0) {
+            echo 'unchecked';
+        } else {
+            echo 'checked';
+        }
     }
 }

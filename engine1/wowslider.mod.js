@@ -25,7 +25,7 @@
         var F = true;
         if (this.hasClass("delays")) {
             p.autoPlay = false;
-            var l = new Array();
+            var l = [];
             for (var K = 0; K < I; K++) {
                 l[K] = b(e[K]).data("delay") || p.delay
             }
@@ -329,7 +329,7 @@
         var F = true;
         if (this.hasClass("delays")) {
             p.autoPlay = false;
-            var l = new Array();
+            var l = [];
             for (var K = 0; K < I; K++) {
                 l[K] = b(e[K]).data("delay") || p.delay
             }

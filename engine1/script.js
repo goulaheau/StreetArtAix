@@ -305,7 +305,7 @@ function ws_glass_parallax(d, l, m) {
         this.a = 0;
         this.next = null
     }
-};// -----------------------------------------------------------------------------------
+}// -----------------------------------------------------------------------------------
 // http://wowslider.com/
 // JavaScript Wow Slider is a free software that helps you easily generate delicious 
 // slideshows with gorgeous transition effects, in a few clicks without writing a single line of code.

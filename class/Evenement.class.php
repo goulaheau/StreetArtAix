@@ -11,10 +11,12 @@ class Evenement
 
     public function __construct($eid = 0)
     {
-        if (self::_exist($eid)) {
-            $req = "SELECT * FROM evenement WHERE eid = '$eid'";
-            $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . FILE . ' à la ligne ' . LINE . ' avec la requete : ' . $req);
-            while ($a = mysqli_fetch_assoc($res)) {
+        if ($eid > 0) {
+            $this->setEid($eid);
+            $req = "SELECT *
+                    FROM evenement
+                    WHERE eid = '$eid'";
+            foreach (Database::_query($req) as $a) {
                 $this->eid = $a['eid'];
                 $this->titre = $a['titre'];
                 $this->description = $a['description'];
@@ -37,9 +39,27 @@ class Evenement
         return $this->eid;
     }
 
+    public function setEid($eid)
+    {
+        if (!preg_match("#^[\d]+$#", $eid)) {
+            return false;
+        }
+        $this->eid = $eid;
+        return true;
+    }
+
     public function getTitre()
     {
         return $this->titre;
+    }
+
+    public function setTitre($titre)
+    {
+        if (!preg_match("#^[\w\s\.\,\:\?\!\(\)]{1,50}+$#", $titre)) {
+            return false;
+        }
+        $this->titre = $titre;
+        return true;
     }
 
     public function getDescription()
@@ -47,37 +67,32 @@ class Evenement
         return $this->description;
     }
 
+    public function setDescription($description)
+    {
+        if (!preg_match("#^[\w\s\.\,\:\?\!\(\)]{1,5000}+$#", $description)) {
+            return false;
+        }
+        $this->description = $description;
+        return true;
+    }
+
     public function getDate()
     {
         return $this->date;
     }
 
+    public function setDate($date)
+    {
+        if (!preg_match("#^[\w\s\.\,\:\?\!\(\)]{1,5}+$#", $date)) {
+            return false;
+        }
+        $this->date = $date;
+        return true;
+    }
+
     public function getDatesql()
     {
         return $this->datesql;
-    }
-
-    public function getLieu()
-    {
-        return $this->lieu;
-    }
-
-    public function setTitre($titre)
-    {
-        $this->titre = $titre;
-        return true;
-    }
-
-    public function setDescription($description)
-    {
-        $this->description = $description;
-        return true;
-    }
-
-    public function setDate($date)
-    {
-        $this->date = $date;
-        return true;
     }
 
     public function setDatesql($datesql)
@@ -86,137 +101,159 @@ class Evenement
         return true;
     }
 
+    public function getLieu()
+    {
+        return $this->lieu;
+    }
+
     public function setLieu($lieu)
     {
+        if (!preg_match("#^[\w\s\.\,\:\?\!\(\)]{1,10}+$#", $lieu)) {
+            return false;
+        }
         $this->lieu = $lieu;
         return true;
     }
 
     public function insert()
     {
-        $db = mysqli_connect("127.0.0.1", "root", "", "streetartaix");
-        $req = "INSERT INTO evenement (datesql, date, titre, lieu, description) VALUES ('" . $this->datesql . "', '" . $this->date . "', '" . $this->titre . "', '" . $this->lieu . "', '" . $this->description . "')";
-        $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
+        $req = "INSERT INTO evenement(datesql, date, titre, lieu, description)
+                VALUES ('" . $this->datesql . "', '" . $this->date . "', '" . $this->titre . "', '" . $this->lieu . "', '" . $this->description . "')";
+        $res = Database::_exec($req);
         if (!$res) return false;
-        $this->eid = mysqli_insert_id($db);
-        return true;
+        if ($res) {
+            $this->eid = Database::_lastInsertId();
+        }
+        return $this;
     }
 
     public static function _exist($e = null)
     {
         if (!is_null($e)) {
-            if (verifName($e)) $where = "titre = '$e'";
-            elseif (is_numeric($e)) $where = "eid = '$e'";
-            else return false;
-
-            $req = "SELECT eid FROM evenement WHERE " . $where;
-            $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
-            if (mysqli_num_rows($res) > 0) return true;
-            else return false;
+            if (verifName($e)) {
+                $where = "titre = '$e'";
+            } elseif (is_numeric($e)) {
+                $where = "eid = '$e'";
+            } else {
+                return false;
+            }
+            $req = "SELECT COUNT(1)
+                    FROM blog_article
+                    WHERE " . $where;
+            if (Database::_selectOne($req) > 0) {
+                return true;
+            }
         }
         return false;
     }
 
-    public static function _evenementsAVenir($limit = 2)
+    public static function _affEvenementsAVenir($limit = 2)
     {
-        if (!is_int($limit)) return array();
-        $req = "SELECT * FROM evenement  WHERE datesql > NOW() ORDER BY datesql ASC LIMIT 0, $limit";
-        $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
+        // Sécurité.
+        if (!is_int($limit)) {
+            return array();
+        }
+
+        // Récupération de $limit évènements à venir.
+        $req = "SELECT *
+                FROM evenement
+                WHERE datesql > NOW()
+                ORDER BY datesql
+                ASC LIMIT 0, $limit";
         $r = array();
-        while ($a = mysqli_fetch_assoc($res)) {
+        foreach (Database::_query($req) as $a) {
             $r[] = $a;
         }
-        return $r;
-    }
 
-    public static function _affEvenementsAVenir($limit)
-    {
-        foreach (Evenement::_evenementsAVenir($limit) as $v) {
-            $e = new Evenement($v['eid']);
-            echo '
-                <div class="col s12">
-                    <div class="card">
-                        <div class="card-image waves-effect waves-block waves-light">
-                            <a href="affichage_evenement.php?id=' . $v['eid'] . '"><img src="media/background1.jpg"></a>
-                            <span class="card-title">' . $v['titre'] . '</span>
+        // Création d'une "Card" pour chaque évènement.
+        foreach ($r as $index => $value) {
+            $evenement = new Evenement($value['eid']);
+            echo '  <div class="col s12">
+                        <div class="card">
+                            <div class="card-image waves-effect waves-block waves-light">
+                                <a href="affichage_evenement.php?id=' . $value['eid'] . '"><img src="media/background1.jpg"></a>
+                                <span class="card-title">' . $value['titre'] . '</span>
+                            </div>
+                            <div class="card-content">
+                                <span class="card-title activator grey-text text-darken-4">
+                                    ' . $value['date'] . '
+                                    <i class="mdi-navigation-more-vert right"></i>
+                                </span>
+                                <br>
+                                <span class="card-title activator grey-text text-darken-4">
+                                    ' . $value['lieu'] . '
+                                </span>
+                                <span class="card-title activator grey-text text-darken-4 right">
+                                    <i class="mdi-social-person right"></i>
+                                    ' . $evenement->_nombreParticipants($value['eid']) . '
+                                </span>
+                            </div>
+                            <div class="card-reveal">
+                                <span class="card-title grey-text text-darken-4">' . $value['titre'] . '<i class="mdi-navigation-close right"></i></span>
+                                <p>' . $value['description'] . '</p>
+                            </div>
                         </div>
-                        <div class="card-content">
-                            <span class="card-title activator grey-text text-darken-4">
-                                ' . $v['date'] . '
-                                <i class="mdi-navigation-more-vert right"></i>
-                            </span>
-                            <br>
-                            <span class="card-title activator grey-text text-darken-4">
-                                ' . $v['lieu'] . '
-                            </span>
-                            <span class="card-title activator grey-text text-darken-4 right">
-                                <i class="mdi-social-person right"></i>
-                                ' . $e->_nombreParticipants($v['eid']) . '
-                            </span>
-                        </div>
-                        <div class="card-reveal">
-                            <span class="card-title grey-text text-darken-4">' . $v['titre'] . '<i class="mdi-navigation-close right"></i></span>
-                            <p>' . $v['description'] . '</p>
-                        </div>
-                    </div>
-                </div>
-            ';
+                    </div>';
         }
     }
 
-    public static function _evenementsPasses($limit = 2)
+    public static function _affEvenementsPasses($limit = 2)
     {
-        if (!is_int($limit)) return array();
-        $req = "SELECT * FROM evenement  WHERE datesql < NOW() ORDER BY datesql DESC LIMIT 0, $limit";
-        $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
+        // Sécurité.
+        if (!is_int($limit)) {
+            return array();
+        }
+
+        // Récupération de $limit évènements passés.
+        $req = "SELECT *
+                FROM evenement
+                WHERE datesql < NOW()
+                ORDER BY datesql
+                DESC LIMIT 0, $limit";
         $r = array();
-        while ($a = mysqli_fetch_assoc($res)) {
+        foreach (Database::_query($req) as $a) {
             $r[] = $a;
         }
-        return $r;
-    }
 
-    public static function _affEvenementsPasses($limit)
-    {
-        foreach (Evenement::_evenementsPasses($limit) as $v) {
-            $e = new Evenement($v['eid']);
-            echo '
-                <div class="col s12">
-                    <div class="card">
-                        <div class="card-image waves-effect waves-block waves-light">
-                            <a href="affichage_evenement.php?id=' . $v['eid'] . '"><img src="media/background1.jpg"></a>
-                            <span class="card-title">' . $v['titre'] . '</span>
+        // Création d'une "Card" pour chaque évènement.
+        foreach ($r as $index => $value) {
+            $evenement = new Evenement($value['eid']);
+            echo '  <div class="col s12">
+                        <div class="card">
+                            <div class="card-image waves-effect waves-block waves-light">
+                                <a href="affichage_evenement.php?id=' . $value['eid'] . '"><img src="media/background1.jpg"></a>
+                                <span class="card-title">' . $value['titre'] . '</span>
+                            </div>
+                            <div class="card-content">
+                                <span class="card-title activator grey-text text-darken-4">
+                                    ' . $value['date'] . '
+                                    <i class="mdi-navigation-more-vert right"></i>
+                                </span>
+                                <br>
+                                <span class="card-title activator grey-text text-darken-4">
+                                    ' . $value['lieu'] . '
+                                </span>
+                                <span class="card-title activator grey-text text-darken-4 right">
+                                    ' . $evenement->_nombreParticipants($value['eid']) . '
+                                    <i class="mdi-social-person right"></i>
+                                </span>
+                            </div>
+                            <div class="card-reveal">
+                                <span class="card-title grey-text text-darken-4">' . $value['titre'] . '<i class="mdi-navigation-close right"></i></span>
+                                <p>' . $value['description'] . '</p>
+                            </div>
                         </div>
-                        <div class="card-content">
-                            <span class="card-title activator grey-text text-darken-4">
-                                ' . $v['date'] . '
-                                <i class="mdi-navigation-more-vert right"></i>
-                            </span>
-                            <br>
-                            <span class="card-title activator grey-text text-darken-4">
-                                ' . $v['lieu'] . '
-                            </span>
-                            <span class="card-title activator grey-text text-darken-4 right">
-                                ' . $e->_nombreParticipants($v['eid']) . '
-                                <i class="mdi-social-person right"></i>
-                            </span>
-                        </div>
-                        <div class="card-reveal">
-                            <span class="card-title grey-text text-darken-4">' . $v['titre'] . '<i class="mdi-navigation-close right"></i></span>
-                            <p>' . $v['description'] . '</p>
-                        </div>
-                    </div>
-                </div>
-            ';
+                    </div>';
         }
     }
 
     public static function _uidParticipants($eid)
     {
-        $req = "SELECT * FROM evenement_utilisateur WHERE eid = '$eid' ";
-        $res = mysqli_query($GLOBALS['db'], $req) or die(mysql_error() . '<br />Erreur dans le fichier ' . __FILE__ . ' à la ligne ' . __LINE__ . ' avec la requete : ' . $req);
+        $req = "SELECT *
+                FROM evenement_utilisateur
+                WHERE eid = '$eid' ";
         $r = array();
-        while ($a = mysqli_fetch_assoc($res)) {
+        foreach (Database::_query($req) as $a) {
             $r[] = $a;
         }
         return $r;
@@ -230,8 +267,8 @@ class Evenement
 
     public static function _pseudoParticipants($eid)
     {
-        foreach (Evenement::_uidParticipants($eid) as $v) {
-            echo $v->getPseudo();
+        foreach (Evenement::_uidParticipants($eid) as $value) {
+            echo $value->getPseudo();
         }
     }
 }
