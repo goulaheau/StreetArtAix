@@ -1,6 +1,8 @@
-<?php require "require.php";
+<?php
+require_once "require.php";
 head("Street Art in Aix");
-require "menu.php"; ?>
+require_once "menu.php";
+?>
     <div id="index-banner" class="parallax-container">
         <div class="section no-pad-bot">
             <div class="container">

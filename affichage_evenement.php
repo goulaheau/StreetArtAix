@@ -55,7 +55,7 @@ if (isset($_POST['contenu']) && isset($_SESSION['id'])) {
                                 <form>
                                     <input <?php disabled(); ?>type="checkbox" name="participer"
                                            onclick="request(readData);" id="participer"
-                                           value="<?php echo $eid; ?>" <?php $utilisateur->_checkOrUncheck($eid) ?>/>
+                                           value="<?php echo $eid; ?>" <?php $utilisateur->checkOrUncheck($eid) ?>/>
                                     <label for="participer">Je participe</label>
                                 </form>
                             </div>

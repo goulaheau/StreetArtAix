@@ -45,9 +45,3 @@
 <script src="js/materialize.js"></script>
 <script src="js/init.js"></script>
 <script src="js/function.js"></script>
-<script src="engine1/wowslider.js"></script>
-<script src="engine1/script.js"></script>
-
-</body>
-
-</html>

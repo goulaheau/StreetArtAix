@@ -1,13 +1,4 @@
 <body>
-<!-- Dropdown Compte -->
-<ul id="dropdown_compte" class="dropdown-content">
-    <li><a href="compte.php">Paramètres du compte</a></li>
-    <li class="divider"></li>
-    <li><a href="#!">Envoyer une image</a></li>
-    <?php affichageCreationEvenement(); ?>
-    <li class="divider"></li>
-    <li><a href="deconnexion.php">Déconnexion</a></li>
-</ul>
 
 <div class="navbar-fixed">
     <nav class="white" role="navigation">
@@ -33,6 +24,15 @@
                     <?php switchMenu(); ?>
                 </ul>
                 <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="mdi-navigation-menu"></i></a>
+                <!-- Dropdown Compte -->
+                <ul id="dropdown_compte" class="dropdown-content">
+                    <li><a href="compte.php">Paramètres du compte</a></li>
+                    <li class="divider"></li>
+                    <li><a href="importation_image.php">Envoyer une image</a></li>
+                    <?php affichageCreationEvenement(); ?>
+                    <li class="divider"></li>
+                    <li><a href="deconnexion.php">Déconnexion</a></li>
+                </ul>
             </div>
         </div>
     </nav>

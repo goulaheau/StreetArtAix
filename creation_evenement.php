@@ -13,21 +13,21 @@ if (isset($_POST['titre']) && isset($_POST['lieu']) && isset($_POST['date']) && 
     $lieu = $_POST['lieu'];
     $description = $_POST['description'];
 
-    $e = new Evenement($titre, $date, $datesql, $lieu, $description);
+    $evenement = new Evenement($titre, $date, $datesql, $lieu, $description);
 
-    if (!$e->setTitre($titre)) {
+    if (!$evenement->setTitre($titre)) {
         $alert = 'Le titre n\'est pas conforme.';
-    } elseif (!$e->setLieu($lieu)) {
+    } elseif (!$evenement->setLieu($lieu)) {
         $alert = 'Le lieu n\'est pas conforme.';
-    } elseif (!$e->setDate($date)) {
+    } elseif (!$evenement->setDate($date)) {
         $alert = 'La date n\'est pas conforme.';
-    } elseif (!$e->setDatesql($datesql)) {
+    } elseif (!$evenement->setDatesql($datesql)) {
         $alert = 'La date n\'est pas conforme.';
-    } elseif (!$e->setDescription($description)) {
+    } elseif (!$evenement->setDescription($description)) {
         $alert = 'La description n\'est pas conforme.';
     } elseif (Evenement::_exist($titre)) {
         $alert = 'Ce titre est déjà utilisé.';
-    } elseif (!$e->insert()) {
+    } elseif (!$evenement->insert()) {
         $alert = 'Problème Insert';
     } else {
         header('Location: index.php');

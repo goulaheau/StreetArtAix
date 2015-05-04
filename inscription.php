@@ -2,7 +2,7 @@
 head("Inscription");
 require "menu.php";
 
-$alert = $email = null;
+$alert = null;
 if (isset($_POST['email']) && isset($_POST['password']) && isset($_POST['pseudo']) && isset($_POST['cemail']) && isset($_POST['cpassword'])) {
     $pseudo = $_POST['pseudo'];
     $email = $_POST['email'];
@@ -36,7 +36,7 @@ if (isset($_POST['email']) && isset($_POST['password']) && isset($_POST['pseudo'
             <div class="row">
                 <h2 class="header">Création de compte</h2>
 
-                <form class="col s12" action="" method="POST">
+                <form class="col s12" action="" method="post">
                     <?php echo '<h4>' . $alert . '</h4>' ?>
                     <div class="row">
                         <div class="input-field col s12">

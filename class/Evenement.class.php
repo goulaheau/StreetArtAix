@@ -117,8 +117,19 @@ class Evenement
 
     public function insert()
     {
-        $req = "INSERT INTO evenement(datesql, date, titre, lieu, description)
-                VALUES ('" . $this->datesql . "', '" . $this->date . "', '" . $this->titre . "', '" . $this->lieu . "', '" . $this->description . "')";
+        $req = "INSERT INTO evenement(
+                  datesql,
+                  date,
+                  titre,
+                  lieu,
+                  description
+                ) VALUES (
+                  '$this->datesql',
+                  '$this->date',
+                  '$this->titre',
+                  '$this->lieu',
+                  '$this->description'
+                )";
         $res = Database::_exec($req);
         if (!$res) return false;
         if ($res) {

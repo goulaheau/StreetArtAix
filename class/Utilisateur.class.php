@@ -165,7 +165,9 @@ class Utilisateur
                 return false;
             }
 
-            $req = "SELECT uid FROM utilisateur WHERE " . $where;
+            $req = "SELECT uid
+                    FROM utilisateur
+                    WHERE " . $where;
             if (Database::_selectOne($req) > 0) {
                 return true;
             }
@@ -173,12 +175,8 @@ class Utilisateur
         return false;
     }
 
-    static public function _checkOrUncheck($eid)
+    public function checkOrUncheck($eid)
     {
-        // Récupération de l'uid.
-        $utilisateur = isset($_SESSION['id']) ? new Utilisateur($_SESSION['id']) : new Utilisateur();
-        $uid = $utilisateur->getUid();
-
         // Récupération des utilisateurs inscrits à l'évènement.
         $req = "SELECT *
                 FROM evenement_utilisateur
@@ -188,10 +186,10 @@ class Utilisateur
             $r[] = $a;
         }
 
-        // Si un utilisateur est inscrit on check, sinon non.
+        // Si l'utilisateur est inscrit on check, sinon non.
         $check = 0;
         foreach ($r as $index => $value) {
-            if ($value['uid'] == $uid) {
+            if ($value['uid'] == $this->uid) {
                 $check++;
             }
         }
